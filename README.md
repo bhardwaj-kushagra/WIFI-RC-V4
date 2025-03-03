@@ -11,7 +11,6 @@ This project demonstrates how to build an **ESP32-based WiFi-controlled RC car**
 - 🎮 **Web-Based Interface** – Control via browser buttons.
 - ⚡ **Speed Control** – Adjust motor speed using a slider.
 - 🔄 **Multi-Directional Movement** – Forward, backward, left, right.
-- 🔋 **Separate Power Supply** – ESP32 and L298N powered independently for better efficiency.
 
 ## 🛠 Hardware Requirements
 - ESP32 WiFi Development Board
