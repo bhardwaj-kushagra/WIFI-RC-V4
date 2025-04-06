@@ -1,0 +1,97 @@
+#define ENA   14          
+#define ENB   12          
+#define IN_1  15          
+#define IN_2  13          
+#define IN_3  2           
+#define IN_4  0           
+
+#include <WiFi.h>
+#include <WebServer.h>
+
+String command;            
+int speedCar = 800;         
+int speed_Coeff = 3;
+
+const char* ssid = "NodeMCU Car";
+WebServer server(80);
+
+// PWM settings
+#define PWM_FREQ 1000    
+#define PWM_RES  8       
+#define PWM_CH_A 0       
+#define PWM_CH_B 1       
+
+void setup() {
+  Serial.begin(115200);
+
+  pinMode(IN_1, OUTPUT);
+  pinMode(IN_2, OUTPUT);
+  pinMode(IN_3, OUTPUT);
+  pinMode(IN_4, OUTPUT);
+
+  // Initialize PWM for motor speed control
+  ledcSetup(PWM_CH_A, PWM_FREQ, PWM_RES);
+  ledcSetup(PWM_CH_B, PWM_FREQ, PWM_RES);
+  ledcAttachPin(ENA, PWM_CH_A);
+  ledcAttachPin(ENB, PWM_CH_B);
+
+  // Setup WiFi Access Point
+  WiFi.softAP(ssid);
+  IPAddress myIP = WiFi.softAPIP();
+  Serial.print("AP IP address: ");
+  Serial.println(myIP);
+ 
+  // Start Web Server
+  server.on("/", HTTP_handleRoot);
+  server.onNotFound(HTTP_handleRoot);
+  server.begin();    
+}
+
+void goAhead(){ 
+  digitalWrite(IN_1, LOW);
+  digitalWrite(IN_2, HIGH);
+  ledcWrite(PWM_CH_A, speedCar / 4);
+
+  digitalWrite(IN_3, LOW);
+  digitalWrite(IN_4, HIGH);
+  ledcWrite(PWM_CH_B, speedCar / 4);
+}
+
+void goBack(){ 
+  digitalWrite(IN_1, HIGH);
+  digitalWrite(IN_2, LOW);
+  ledcWrite(PWM_CH_A, speedCar / 4);
+
+  digitalWrite(IN_3, HIGH);
+  digitalWrite(IN_4, LOW);
+  ledcWrite(PWM_CH_B, speedCar / 4);
+}
+
+void stopRobot(){  
+  digitalWrite(IN_1, LOW);
+  digitalWrite(IN_2, LOW);
+  ledcWrite(PWM_CH_A, 0);
+
+  digitalWrite(IN_3, LOW);
+  digitalWrite(IN_4, LOW);
+  ledcWrite(PWM_CH_B, 0);
+}
+
+void loop() {
+  server.handleClient();
+  
+  command = server.arg("State");
+  if (command == "F") goAhead();
+  else if (command == "B") goBack();
+  else if (command == "S") stopRobot();
+  else if (command == "0") speedCar = 400;
+  else if (command == "9") speedCar = 1023;
+}
+
+void HTTP_handleRoot() {
+  if (server.hasArg("State")) {
+    Serial.println(server.arg("State"));
+  }
+  server.send(200, "text/html", "");
+  delay(1);
+}
